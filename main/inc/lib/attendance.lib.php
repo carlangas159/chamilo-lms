@@ -1227,15 +1227,21 @@ class Attendance
     public function get_users_attendance_sheet(
         $attendanceId,
         $user_id = 0,
-        $groupId = 0
+        $groupId = 0,
+        $course_id=0
     ) {
+
+        $course_id = (0 == $course_id)?api_get_course_int_id():$course_id;
+
         $tbl_attendance_sheet = Database::get_course_table(TABLE_ATTENDANCE_SHEET);
         $tbl_attendance_calendar = Database::get_course_table(TABLE_ATTENDANCE_CALENDAR);
         $attendance_calendar = $this->get_attendance_calendar(
             $attendanceId,
             'all',
             null,
-            $groupId
+            $groupId,
+        true,
+        $course_id
         );
         $calendar_ids = [];
         // get all dates from calendar by current attendance
@@ -1243,7 +1249,6 @@ class Attendance
             $calendar_ids[] = $cal['id'];
         }
 
-        $course_id = api_get_course_int_id();
 
         $data = [];
         if (empty($user_id)) {
@@ -1290,7 +1295,9 @@ class Attendance
                 }
             }
         }
-
+        if($attendanceId ==2){
+            $e = $attendanceId;
+        }
         return $data;
     }
 
@@ -1448,12 +1455,13 @@ class Attendance
         $type = 'all',
         $calendar_id = null,
         $groupId = 0,
-        $showAll = false
+        $showAll = false,
+        $course_id=0
     ) {
         $tbl_attendance_calendar = Database::get_course_table(TABLE_ATTENDANCE_CALENDAR);
         $tbl_acrg = Database::get_course_table(TABLE_ATTENDANCE_CALENDAR_REL_GROUP);
         $attendanceId = intval($attendanceId);
-        $course_id = api_get_course_int_id();
+        $course_id = (0==$course_id)? api_get_course_int_id():$course_id;
 
         if ($showAll) {
             $sql = "SELECT * FROM $tbl_attendance_calendar c
@@ -2255,5 +2263,198 @@ class Attendance
         ];
         $pdf = new PDF('A4', null, $params);
         $pdf->html_to_pdf_with_template($tableToString);
+    }
+
+
+
+    public function getCoursesWithAttendance (
+        $student_id = 0,
+        DateTime $startDate = null,
+        DateTime $endDate = null) {
+
+        $courseManager = new CourseManager();
+        $attendanceLib = new Attendance();
+        $salida = [];
+
+        //$courses = $this->getCoursesWithAttendanceByStudentId($student_id, $dateStart, $dateEnd);
+
+        $specialCourses = $courseManager::returnSpecialCourses(
+            $student_id, false, false
+        );
+        $courses = $courseManager::returnCourses(
+            $student_id, false,
+            false
+        );
+
+        /* Proceso para cursos sin categoria */
+        $coursesWithNoCategory = $courses['not_category'];
+        $totalCoursesNoCategory = count($coursesWithNoCategory);
+
+        for ($i = 0; $i < $totalCoursesNoCategory; $i++) {
+            $w = $coursesWithNoCategory[$i];
+            $asistencias = $attendanceLib->get_attendances_list($w['course_id']);
+            $temp = [];
+            $sheetsProccessed = [];
+            $tempDate = [];
+
+            foreach ($asistencias as $k => $v) {
+                $asistencia_id = $v['id'];
+                $course_id = $w['course_id'];
+                $sheets = $attendanceLib->get_users_attendance_sheet(
+                    $asistencia_id,
+                    $student_id,
+                      0,
+                    $course_id
+                  );
+                $sheetsProccessed[] = [];
+
+                foreach ($sheets as $a => $b) {
+                    $totalb = count($b);
+                    $tempDate = [];
+                    for ($ii = 0; $ii < $totalb; $ii++) {
+                        $work = $b[$ii];
+                        $dateProccess = new DateTime($work[0]);
+                        $asistencia_procesada = null;
+
+                        if(empty($endDate) && empty($startDate)) {
+                            $asistencia_procesada = $work;
+
+                        } elseif(!empty($startDate) and empty($endDate)) {
+                            if($dateProccess >= $startDate) {
+
+                                $asistencia_procesada = $work;
+                            }
+                        } elseif(!empty($endDate) and empty($startDate)) {
+                            if($dateProccess <= $endDate) {
+                                $asistencia_procesada = $work;
+
+                            }
+                        } elseif(!empty($endDate) && !empty($startDate)) {
+
+                            if($dateProccess >= $startDate && $dateProccess <= $endDate) {
+
+                                $asistencia_procesada = $work;
+                            }
+                        }
+
+
+                        if($asistencia_id ==2){
+                            $e = $asistencia_id;
+                        }
+                        if(!empty($asistencia_procesada)) {
+
+
+                            //$asistencia_procesada['datetime'] = $dateProccess;
+                            $fecha = $asistencia_procesada['0'];
+                            $asistencia_procesada[0]= $asistencia_procesada[1];
+                            $asistencia_procesada[1]= $fecha;
+
+                            $asistencia_procesada[2]= $w['title'];
+                            $asistencia_procesada['courseTitle']=$w['title'];
+
+                            $asistencia_procesada[3]= $w['real_id'];
+                            $asistencia_procesada['courseId']=$w['real_id'];
+
+                            $asistencia_procesada[4]= $v['name'];
+                            $asistencia_procesada['attendanceName']= $v['name'];
+
+                            $asistencia_procesada[5]= $v['id'];
+                            $asistencia_procesada['attendanceId']= $v['id'];
+                            if($asistencia_procesada['presence']== 1){
+                                $asistencia_procesada['presence'] = get_lang('Present');
+                                $asistencia_procesada[0] = get_lang('Present');
+                            }
+                            $tempDate[] = $asistencia_procesada;
+                            $corte = new DateTime($fecha);
+                            $salida [$corte->format('Y-m-d')][]=$asistencia_procesada;
+                        }
+
+                    }
+
+
+                }
+                $sheetsProccessed[] = $tempDate;
+
+                //$v['sheet'] = $attendanceLib->get_users_attendance_sheet($asistencia_id, $student_id);
+
+
+                $temp[] = $sheetsProccessed;
+            }
+
+
+            $courses['not_category'][$i]['attendanceSheet'] = $temp;
+
+
+        }
+
+        /* Proceso para cursos en categoria */
+        $coursesWithNoCategory = $courses['in_category'];
+        $totalCoursesNoCategory = count($coursesWithNoCategory);
+
+        for ($i = 0; $i < $totalCoursesNoCategory; $i++) {
+            $w = $coursesWithNoCategory[$i];
+            $asistencias = $attendanceLib->get_attendances_list($w['course_id']);
+            $temp = [];
+            $sheetsProccessed = [];
+            $tempDate = [];
+
+            foreach ($asistencias as $k => $v) {
+                $asistencia_id = $v['id'];
+                $sheets = $attendanceLib->get_users_attendance_sheet($asistencia_id, $student_id);
+                $sheetsProccessed[] = [];
+
+                foreach ($sheets as $a => $b) {
+                    $totalb = count($b);
+                    $tempDate = [];
+                    for ($ii = 0; $ii < $totalb; $ii++) {
+                        $work = $b[$ii];
+                        $dateProccess = new DateTime($work[0]);
+                        $asistencia_procesada = null;
+
+                        if(empty($endDate) && empty($startDate)) {
+                            $asistencia_procesada = $work;
+
+                        } elseif(!empty($startDate) and empty($endDate)) {
+                            if($dateProccess >= $startDate) {
+
+                                $asistencia_procesada = $work;
+                            }
+                        } elseif(!empty($endDate) and empty($startDate)) {
+                            if($dateProccess <= $endDate) {
+                                $asistencia_procesada = $work;
+
+                            }
+                        } elseif(!empty($endDate) && !empty($startDate)) {
+
+                            if($dateProccess >= $startDate && $dateProccess <= $endDate) {
+
+                                $asistencia_procesada = $work;
+                            }
+                        }
+
+                        if(!empty($asistencia_procesada)) {
+                            $asistencia_procesada['datetime'] = $dateProccess;
+                            $tempDate[] = $asistencia_procesada;
+                            $corte = new DateTime($fecha);
+                            $salida [$corte->format('Y-m-d')][]=$asistencia_procesada;
+                        }
+
+                    }
+
+
+                }
+                $sheetsProccessed[$asistencia_id] = $tempDate;
+                $temp[$asistencia_id] = $sheetsProccessed;
+            }
+
+
+            $courses['in_category'][$i]['attendanceSheet'] = $temp;
+
+
+        }
+        ksort( $salida);
+
+        return $salida;
+        return $courses;
     }
 }
