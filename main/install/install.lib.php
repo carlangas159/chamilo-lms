@@ -1679,8 +1679,8 @@ function display_configuration_parameter(
             /* show/hide admin password in step 5*/
             $hiddenPasswordClass = 'inputShowPwd';
             $inputType = 'password';
-            $eyeForPassword = '<span class="showEle"></span>';
-
+            $eyeForPassword =
+                '<input type="checkbox" id="showPassword" class="hidden">' . '<label for="showPassword">' . Display::returnFontAwesomeIcon('eye', null, true, 'showPasswordEye') . '</label> ';
         }
         $html .= '<div class="col-sm-6 '.$hiddenPasswordClass.'"><input class="form-control" type="'.$inputType.'" size="' . FORM_FIELD_DISPLAY_LENGTH . '" maxlength="' . MAX_FORM_FIELD_LENGTH . '" name="' . $formFieldName . '" value="' . api_htmlentities($parameterValue, ENT_QUOTES) . '" />' . $eyeForPassword."</div>";
     }
