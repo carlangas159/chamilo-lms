@@ -1222,6 +1222,8 @@ class Attendance
      * @param int $user_id      for showing data for only one user (optional)
      * @param int $groupId
      * @param int $course_id      if id = 0 get the current course
+     * @param DateTime    $startDate Filter atttendance sheet with a start date
+     * @param DateTime    $endDate Filter atttendance sheet with a end date
      *
      * @return array users attendance sheet data
      */
@@ -1229,7 +1231,9 @@ class Attendance
         $attendanceId,
         $user_id = 0,
         $groupId = 0,
-        $course_id=0
+        $course_id=0,
+        DateTime $startDate = null,
+        DateTime $endDate = null
     ) {
         //Get actual course or by course_id
         $course_id = (0 == $course_id)?api_get_course_int_id():$course_id;
@@ -1241,7 +1245,9 @@ class Attendance
             null,
             $groupId,
             true,
-            $course_id
+            $course_id,
+            $startDate,
+            $endDate
         );
         $calendar_ids = [];
         // get all dates from calendar by current attendance
@@ -1249,7 +1255,16 @@ class Attendance
             $calendar_ids[] = $cal['id'];
         }
 
-        $course_id = api_get_course_int_id(); // ?
+        $whereDate = '';
+        if (!empty($startDate)) {
+            $whereDate .= " AND cal.date_time >= '" . $startDate->format('Y-m-d H:i:s') . "'";
+        }
+        if (!empty($endDate)) {
+            $whereDate .= " AND cal.date_time <= '" . $endDate->format('Y-m-d H:i:s') . "'";
+        }
+
+        // moved at start of this function
+        // $course_id = api_get_course_int_id();
 
         $data = [];
         if (empty($user_id)) {
@@ -1286,6 +1301,7 @@ class Attendance
                             cal.c_id =  $course_id AND
                             att.user_id = '$user_id' AND
                             att.attendance_calendar_id IN (".implode(',', $calendar_ids).")
+                            $whereDate
                         ORDER BY date_time";
                 $res = Database::query($sql);
                 if (Database::num_rows($res) > 0) {
@@ -1447,6 +1463,8 @@ class Attendance
      * @param int    $groupId
      * @param bool   $showAll      = false show group calendar items or not
      * @param int    $course_id
+     * @param DateTime    $startDate Filter calendar with a start date
+     * @param DateTime    $endDate Filter calendar with a end date
      *
      * @return array attendance calendar data
      */
@@ -1456,16 +1474,24 @@ class Attendance
         $calendar_id = null,
         $groupId = 0,
         $showAll = false,
-        $course_id=0
+        $course_id=0,
+        DateTime $startDate = null,
+        DateTime $endDate = null
     ) {
         $tbl_attendance_calendar = Database::get_course_table(TABLE_ATTENDANCE_CALENDAR);
         $tbl_acrg = Database::get_course_table(TABLE_ATTENDANCE_CALENDAR_REL_GROUP);
         $attendanceId = intval($attendanceId);
         $course_id = (0==$course_id)? api_get_course_int_id():$course_id;
-
+        $whereDate = '';
+        if (!empty($startDate)) {
+            $whereDate .= " AND c.date_time >= '" . $startDate->format('Y-m-d H:i:s') . "'";
+        }
+        if (!empty($endDate)) {
+            $whereDate .= " AND c.date_time <= '" . $endDate->format('Y-m-d H:i:s') . "'";
+        }
         if ($showAll) {
             $sql = "SELECT * FROM $tbl_attendance_calendar c
-                    WHERE c_id = $course_id AND attendance_id = '$attendanceId'";
+                    WHERE c_id = $course_id AND attendance_id = '$attendanceId' $whereDate";
         } else {
             $sql = "SELECT * FROM $tbl_attendance_calendar c
                     WHERE
@@ -1475,6 +1501,7 @@ class Attendance
                             SELECT calendar_id FROM $tbl_acrg
                             WHERE c_id = $course_id AND group_id != 0 AND group_id IS NOT NULL
                         )
+                        $whereDate
                     ";
         }
 
@@ -2284,7 +2311,7 @@ class Attendance
 
         $courseManager = new CourseManager();
         $attendanceLib = new Attendance();
-        $salida = [];
+        $data = [];
         // unused by now
         /*
          $specialCourses = $courseManager::returnSpecialCourses(
@@ -2292,7 +2319,9 @@ class Attendance
         );
          */
         $courses = $courseManager::returnCourses(
-            $student_id, false, false
+            $student_id,
+            false,
+            false
         );
 
         /* Get course with (in_category) and without (not_category) category */
@@ -2310,8 +2339,14 @@ class Attendance
                     $attendance_id = $v['id'];
                     $course_id = $w['course_id'];
                     $sheets = $attendanceLib->get_users_attendance_sheet(
-                        $attendance_id, $student_id, 0, $course_id
+                        $attendance_id,
+                        $student_id,
+                        0,
+                        $course_id,
+                        $startDate,
+                        $endDate
                     );
+
                     $sheetsProccessed[] = [];
                     foreach ($sheets as $a => $b) {
                         $totalb = count($b);
@@ -2362,7 +2397,7 @@ class Attendance
                                 }
                                 $tempDate[] = $attendancesProccess;
                                 $corte = new DateTime($fecha);
-                                $salida [$corte->format('Y-m-d')][] = $attendancesProccess;
+                                $data [$corte->format('Y-m-d')][] = $attendancesProccess;
                             }
 
                         }
@@ -2378,11 +2413,11 @@ class Attendance
 
         /* Order desc by date,  by default */
         if($orderDesc == true) {
-            ksort($salida);
+            ksort($data);
         } else {
-            krsort($salida);
+            krsort($data);
         }
 
-        return $salida;
+        return $data;
     }
 }

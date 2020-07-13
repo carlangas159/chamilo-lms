@@ -728,17 +728,4 @@ class AttendanceController
         $this->view->set_template('calendar_logins');
         $this->view->render();
     }
-
-
-    /**
-     * Display all attendance sheets by a user
-     *
-     */
-    public function allAttendanceList()
-    {
-
-        $this->view->set_layout('layout');
-        $this->view->set_template('all_attendance_list');
-        $this->view->render();
-    }
 }
