@@ -28,6 +28,7 @@ if(isset($_GET['startDate'])){
 $startDate = $startDate->setTime(0,0,0);
 
 $endDate =  new DateTime();
+$endDate = $endDate->modify('-1 week');
 if(isset($_GET['endDate'])){
     $endDate = new DateTime($_GET['endDate']);
 
