@@ -44,12 +44,36 @@ class GradebookEvaluation
      */
     protected $description;
 
+//    /**
+//     * @var int
+//     *
+//     * @ORM\Column(name="user_id", type="integer", nullable=false)
+//     */
+//    protected $userId;
     /**
-     * @var int
-     *
-     * @ORM\Column(name="user_id", type="integer", nullable=false)
+     * @ORM\OneToOne (targetEntity="Chamilo\CoreBundle\Entity\User",
+     *      inversedBy="gradebook_certificate")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", onDelete="CASCADE")
      */
-    protected $userId;
+    protected $user;
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return $this
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
 
     /**
      * @ORM\ManyToOne(targetEntity="Chamilo\CoreBundle\Entity\Course", inversedBy="gradebookEvaluations")
@@ -171,22 +195,22 @@ class GradebookEvaluation
      *
      * @return GradebookEvaluation
      */
-    public function setUserId($userId)
-    {
-        $this->userId = $userId;
-
-        return $this;
-    }
+//    public function setUserId($userId)
+//    {
+//        $this->userId = $userId;
+//
+//        return $this;
+//    }
 
     /**
      * Get userId.
      *
      * @return int
      */
-    public function getUserId()
-    {
-        return $this->userId;
-    }
+//    public function getUserId()
+//    {
+//        return $this->userId;
+//    }
 
     /**
      * Set categoryId.

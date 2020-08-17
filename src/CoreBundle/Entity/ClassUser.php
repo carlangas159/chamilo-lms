@@ -23,6 +23,33 @@ class ClassUser
      */
     protected $classId;
 
+
+
+
+
+    /**
+     * @ORM\ManyToOne(targetEntity="Chamilo\CoreBundle\Entity\User", inversedBy="class_user")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", onDelete="CASCADE")
+     */
+    protected $user;
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return $this
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
     /**
      * @var int
      *
@@ -30,7 +57,7 @@ class ClassUser
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="NONE")
      */
-    protected $userId;
+    // protected $userId;
 
     /**
      * Set classId.
@@ -63,20 +90,24 @@ class ClassUser
      *
      * @return ClassUser
      */
+    /*
     public function setUserId($userId)
     {
         $this->userId = $userId;
 
         return $this;
     }
+    */
 
     /**
      * Get userId.
      *
      * @return int
      */
+    /*
     public function getUserId()
     {
         return $this->userId;
     }
+    */
 }

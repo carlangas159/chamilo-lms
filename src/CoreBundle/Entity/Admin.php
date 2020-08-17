@@ -24,11 +24,35 @@ class Admin
     protected $id;
 
     /**
+     * @ORM\OneToOne (targetEntity="Chamilo\CoreBundle\Entity\User", inversedBy="admin")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", onDelete="CASCADE")
+     */
+    protected $user;
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+
+    /**
+     * @param User $user
+     *
+     * @return $this
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+
+    /**
      * @var int
      *
      * @ORM\Column(name="user_id", type="integer", nullable=false)
      */
-    protected $userId;
+    //protected $userId;
 
     /**
      * Set userId.
@@ -37,22 +61,26 @@ class Admin
      *
      * @return Admin
      */
+    /*
     public function setUserId($userId)
     {
         $this->userId = $userId;
 
         return $this;
     }
+    */
 
     /**
      * Get userId.
      *
      * @return int
      */
+    /*
     public function getUserId()
     {
         return $this->userId;
     }
+    */
 
     /**
      * Get id.
