@@ -47,40 +47,37 @@ class Admin
     }
 
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="user_id", type="integer", nullable=false)
-     */
-    //protected $userId;
-
-    /**
-     * Set userId.
-     *
-     * @param int $userId
-     *
-     * @return Admin
-     */
-    /*
-    public function setUserId($userId)
-    {
-        $this->userId = $userId;
-
-        return $this;
-    }
-    */
-
-    /**
-     * Get userId.
-     *
-     * @return int
-     */
-    /*
-    public function getUserId()
-    {
-        return $this->userId;
-    }
-    */
+//    /**
+//     * @var int
+//     *
+//     * @ORM\Column(name="user_id", type="integer", nullable=false)
+//     */
+//    //protected $userId;
+//
+//    /**
+//     * Set userId.
+//     *
+//     * @param int $userId
+//     *
+//     * @return Admin
+//     */
+//
+//    public function setUserId($userId)
+//    {
+//        $this->userId = $userId;
+//
+//        return $this;
+//    }
+//
+//    /**
+//     * Get userId.
+//     *
+//     * @return int
+//     */
+//    public function getUserId()
+//    {
+//        return $this->userId;
+//    }
 
     /**
      * Get id.

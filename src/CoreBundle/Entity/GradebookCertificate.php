@@ -36,14 +36,17 @@ class GradebookCertificate
      */
     protected $catId;
 
+//    /**
+//     * @var int
+//     *
+//     * @ORM\Column(name="user_id", type="integer", nullable=false)
+//     */
+//    protected $userId;
     /**
-     * @var int
+     * @ORM\ManyToOne  (
+     *     targetEntity="Chamilo\CoreBundle\Entity\User",
+     *      inversedBy="gradebook_certificate")
      *
-     * @ORM\Column(name="user_id", type="integer", nullable=false)
-     */
-    //protected $userId;
-    /**
-     * @ORM\OneToOne (targetEntity="Chamilo\CoreBundle\Entity\User", inversedBy="gradebook_certificate")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id", onDelete="CASCADE")
      */
     protected $user;
@@ -118,32 +121,32 @@ class GradebookCertificate
         return $this->catId;
     }
 
-    /**
-     * Set userId.
-     *
-     * @param int $userId
-     *
-     * @return GradebookCertificate
-     */
-    /*
-    public function setUserId($userId)
-    {
-        $this->userId = $userId;
+//    /**
+//     * Set userId.
+//     *
+//     * @param int $userId
+//     *
+//     * @return GradebookCertificate
+//     */
+//
+//    public function setUserId($userId)
+//    {
+//        $this->userId = $userId;
+//
+//        return $this;
+//    }
+//
+//    /**
+//     * Get userId.
+//     *
+//     * @return int
+//     */
+//
+//    public function getUserId()
+//    {
+//        return $this->userId;
+//    }
 
-        return $this;
-    }
-    */
-    /**
-     * Get userId.
-     *
-     * @return int
-     */
-    /*
-    public function getUserId()
-    {
-        return $this->userId;
-    }
-*/
     /**
      * Set scoreCertificate.
      *

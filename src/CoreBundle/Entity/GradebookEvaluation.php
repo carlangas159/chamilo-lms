@@ -52,7 +52,7 @@ class GradebookEvaluation
 //    protected $userId;
     /**
      * @ORM\OneToOne (targetEntity="Chamilo\CoreBundle\Entity\User",
-     *      inversedBy="gradebook_certificate")
+     *      inversedBy="gradebook_evaluation")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id", onDelete="CASCADE")
      */
     protected $user;
@@ -188,13 +188,13 @@ class GradebookEvaluation
         return $this->description;
     }
 
-    /**
-     * Set userId.
-     *
-     * @param int $userId
-     *
-     * @return GradebookEvaluation
-     */
+//    /**
+//     * Set userId.
+//     *
+//     * @param int $userId
+//     *
+//     * @return GradebookEvaluation
+//     */
 //    public function setUserId($userId)
 //    {
 //        $this->userId = $userId;
@@ -202,11 +202,11 @@ class GradebookEvaluation
 //        return $this;
 //    }
 
-    /**
-     * Get userId.
-     *
-     * @return int
-     */
+//    /**
+//     * Get userId.
+//     *
+//     * @return int
+//     */
 //    public function getUserId()
 //    {
 //        return $this->userId;
