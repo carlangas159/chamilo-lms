@@ -363,8 +363,14 @@ class SortableTable extends HTML_Table
     /**
      * Displays the table, complete with navigation buttons to browse through
      * the data-pages.
+     *
+     * @param boolean $printNoDataAvailable optional. Print NoDataAvailable if had no record
+     *
+     * @return string
      */
-    public function return_table()
+    public function return_table(
+        $printNoDataAvailable = false
+    )
     {
         $empty_table = false;
         $content = $this->get_table_html();
@@ -383,7 +389,9 @@ class SortableTable extends HTML_Table
 
         $params = $this->get_sortable_table_param_string().'&amp;'.$this->get_additional_url_paramstring();
         if ($empty_table) {
-            return '';
+            if ($printNoDataAvailable == false) return '';
+
+            return "<div class='text-center'>".get_lang('NoDataAvailable')."</div>";
         }
         $table_id = 'form_'.$this->table_name.'_id';
         $form = $this->get_page_select_form();
@@ -404,6 +412,7 @@ class SortableTable extends HTML_Table
             $html .= '</tr>';
             $html .= '</table>';
             $html .= '</div>';
+
         }
 
         if (count($this->form_actions) > 0) {

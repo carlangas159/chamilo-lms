@@ -634,7 +634,7 @@ if (api_is_platform_admin() &&
 
 $table->set_form_actions($actionsList);
 
-$table_result = $table->return_table();
+$table_result = $table->return_table(true);
 $extra_search_options = '';
 $toolbarActions = Display::toolbarAction(
     'toolbarUser',
