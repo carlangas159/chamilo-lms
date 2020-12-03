@@ -395,8 +395,28 @@ div.items-course-info h4.title{
     overflow: hidden;
 }
 
+
+/** to center img into figure **/
+.items-course .items-course-image figure {
+    background-color:#ecf0f1
+}
+.items-course .items-course-image figure  img{
+    position: relative;
+    left: 50%;
+    top: 50%;
+    -webkit-transform:translate(-50%, -50%);
+    -moz-transform:translate(-50%, -50%);
+    -ms-transform:translate(-50%, -50%);
+    -o-transform:translate(-50%, -50%);
+    transform:translate(-50%, -50%);
+}
+@media (min-width: 767px) {
+    .col-sm-6 .items-course .items-course-image figure {
+        height: 170px;
+    }
+}
 @media (min-width: 991px) {
     .col-sm-6 .items-course .items-course-image figure {
-        max-height: 135px;
+        height: 135px;
     }
 }
