@@ -6531,7 +6531,7 @@ class Exercise
         }
 
         if ($limitTimeExists) {
-            $timeNow = time();
+            $timeNow = api_get_utc_datetime();
             $existsStartDate = false;
             $nowIsAfterStartDate = true;
             $existsEndDate = false;
@@ -8825,7 +8825,7 @@ class Exercise
                     if (!empty($endTime)) {
                         $end_time = api_strtotime($endTime->format('Y-m-d H:i:s'), 'UTC');
                     }
-                    $now = time();
+                    $now = api_get_utc_datetime();
                     //If both "clocks" are enable
                     if ($start_time && $end_time) {
                         if ($now > $start_time && $end_time > $now) {
@@ -9274,7 +9274,7 @@ class Exercise
                             // Quiz not ready due to time limits
                             //@todo use the is_visible function
                             if (!empty($startTime) && !empty($endTime)) {
-                                $today = time();
+                                $today = api_get_utc_datetime();
                                 if ($today < $start_time) {
                                     $attempt_text = sprintf(
                                         get_lang('ExerciseWillBeActivatedFromXToY'),
@@ -9448,7 +9448,7 @@ class Exercise
         if (!empty($value)) {
             $endDate = new DateTime($exerciseResultInfo['exe_date'], new DateTimeZone('UTC'));
             $endDate->add(new DateInterval('PT'.$value.'M'));
-            $now = time();
+            $now = api_get_utc_datetime();
             if ($endDate->getTimestamp() > $now) {
                 return (int) $endDate->getTimestamp() - $now;
             }
