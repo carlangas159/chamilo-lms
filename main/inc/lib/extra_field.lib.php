@@ -794,6 +794,7 @@ class ExtraField extends Model
         if (!empty($requiredFields)) {
             /** @var HTML_QuickForm_input $element */
             foreach ($form->getElements() as $element) {
+                echo __FILE__."::".__LINE__." E <pre>".var_export($element, true)."</pre>";
                 $name = str_replace('extra_', '', $element->getName());
                 if (in_array($name, $requiredFields)) {
                     $form->setRequired($element);
@@ -1171,7 +1172,8 @@ class ExtraField extends Model
                         }
                         break;
                     case self::FIELD_TYPE_SELECT:
-                        $this->addSelectElement($form, $field_details, $defaultValueId, $freezeElement);
+
+                    $this->addSelectElement($form, $field_details, $defaultValueId, $freezeElement);
                         break;
                     case self::FIELD_TYPE_SELECT_MULTIPLE:
                         $options = [];
@@ -1182,9 +1184,57 @@ class ExtraField extends Model
                         // select element of teachers (see BT#17648)
                         $variable = $field_details['variable'];
                         $authors = ($variable == 'authors' || $variable == 'authorlpitem') ? true : false;
+                        $remedialcourselist = ($variable == 'remedialcourselist') ? true : false;
+                        $advancedcourselist = ($variable == 'advancedcourselist') ? true : false;
                         if ($authors == false) {
-                            foreach ($field_details['options'] as $optionDetails) {
-                                $options[$optionDetails['option_value']] = $optionDetails['display_text'];
+                            $field = new ExtraField('exercise');
+                            $remedialField = $field->get_handler_field_info_by_field_variable('remedialcourselist');
+                            $field = new ExtraField('exercise');
+                            $advancedCourseField = $field->get_handler_field_info_by_field_variable('advancedcourselist');
+
+                            if (
+                                ($remedialcourselist == true
+                                    && isset($remedialField['default_value'])
+                                    && $remedialField['default_value'] == 1 // if the plugin is activated
+                                ) ||
+                                ($advancedcourselist == true
+                                    && isset($advancedCourseField['default_value'])
+                                    && $advancedCourseField['default_value'] == 1 // if the plugin is activated
+                                )
+                            ) {
+                                // See BT#18165
+                                $sessionId = api_get_session_id();
+                                if ($sessionId != 0) {
+                                    $courseList = SessionManager::getCoursesInSession(api_get_session_id());
+                                    foreach ($courseList as $course) {
+                                        $courseSession = api_get_course_info_by_id($course);
+                                        $course_id = $courseSession['real_id'];
+                                        $title = $courseSession['title'];
+                                        if (api_get_course_int_id() != $course_id) {
+                                            $options[$course_id] = "$title";
+                                        }
+                                    }
+                                } else {
+                                    $courseList = CourseManager::get_courses_list_by_user_id(
+                                        api_get_user_id(),
+                                        false,
+                                        false,
+                                        true,
+                                        [],
+                                        false
+                                    );
+                                    foreach ($courseList as $course) {
+                                        $course_id = $course['real_id'];
+                                        $title = $course['title'];
+                                        if (api_get_course_int_id() != $course_id) {
+                                            $options[$course_id] = "$title";
+                                        }
+                                    }
+                                }
+                            } else {
+                                foreach ($field_details['options'] as $optionDetails) {
+                                    $options[$optionDetails['option_value']] = $optionDetails['display_text'];
+                                }
                             }
                         } else {
                             if ($variable == 'authors') {
