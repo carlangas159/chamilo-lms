@@ -1,11 +1,17 @@
 Create a field to remedial course
 ======
 
-@todo
-Make sure two extra fields exist in order to enable the "Distribution by entity" and "Distribution by author" reports.
+The purpose of this plugin is the possibility of adding remedial courses or advanced courses so that, when a course is 
+approved or failed, you can opt for a set of remedial courses or advanced courses.
 
-This plugin adds the extra fields necessary to display "Distribution by entity" and "Distribution by author" reports.
-* For the "Distribution by entity" report to be displayed, it is necessary to have the type of extra user field, with a multiple selector.
-The name of this field must be "company".
-* For the "" Distribution by author "report to be displayed, it is necessary to have the field type extra learning path, with a multiple selector drop-down.
-The name of this field must be "authors".
+* For remedial courses:
+  When activating the plugin, in the test settings, a remedialCourseList field is enabled, where the course (s) to be 
+  taken is established if the user fails all the course attempts.
+  For this to work, the number of attempts must be activated and also, have an exam success rate enabled.
+  After the user fails the last attempt, they automatically enroll in the selected courses.
+
+* For advanced courses:
+  When activating the plugin, in the test settings, the advanceCourseList field is enabled, which allows you to select 
+  one or more courses that will be added to the user when they have passed an exam.
+  This function is independent of the number of attempts, but the passing percentage must be established from the test 
+  configuration.

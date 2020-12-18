@@ -11249,8 +11249,8 @@ class Exercise
             $this->sessionId
         );
         if (!isset($bestAttempt['exe_result'])) {
-            // En el caso que el resultado sea 0, get_best_attempt_exercise_results_per_user no devuelve
-            // datos, para eso se utiliza este bloque
+            // In the case that the result is 0, get_best_attempt_exercise_results_per_user does not return data,
+            // for that this block is used
             $exercise_stat_info = Event::getExerciseResultsByUser(
                 api_get_user_id(),
                 $this->id,
@@ -11275,14 +11275,7 @@ class Exercise
             $total
         );
         if ($percentSuccess == 0 && $pass == false) {
-            $percentSuccess = float_format(
-                ($resultado / (0 != $total ? $total : 1)) * 100,
-                1
-            );
-            //CMAR temporal
-            if ($percentSuccess >= 50) {
-                $pass = true;
-            }
+            return '';
         }
         $canRemedial = ($pass == false) ? true : false;
         //Examen de siguiente nivel
@@ -11346,8 +11339,8 @@ class Exercise
             $this->sessionId
         );
         if (!isset($bestAttempt['exe_result'])) {
-            // En el caso que el resultado sea 0, get_best_attempt_exercise_results_per_user no devuelve
-            // datos, para eso se utiliza este bloque
+            // In the case that the result is 0, get_best_attempt_exercise_results_per_user does not return data,
+            // for that this block is used
             $exercise_stat_info = Event::getExerciseResultsByUser(
                 api_get_user_id(),
                 $this->id,
@@ -11372,14 +11365,7 @@ class Exercise
             $total
         );
         if ($percentSuccess == 0 && $pass == false) {
-            $percentSuccess = float_format(
-                ($resultado / (0 != $total ? $total : 1)) * 100,
-                1
-            );
-            //CMAR temporal
-            if ($percentSuccess >= 50) {
-                $pass = true;
-            }
+            return '';
         }
         $canRemedial = ($pass == false) ? true : false;
         $extraFieldValue = new ExtraFieldValue('exercise');
@@ -11430,6 +11416,6 @@ class Exercise
                 $extraMessage .= "<br>".get_lang('RemedialCourseAlreadyInscription');
             }
         }
-return $extraMessage;
+        return $extraMessage;
     }
 }
