@@ -2317,6 +2317,7 @@ HOTSPOT;
                     $sqlWhereOption
                     AND user.status NOT IN (".api_get_users_status_ignored_in_reports('string').")
                 ORDER BY tth.c_id ASC, tth.exe_date DESC ";
+
         }
 
         if (empty($sql)) {

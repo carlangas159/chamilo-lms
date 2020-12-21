@@ -6729,7 +6729,7 @@ class Exercise
                         $this->name,
                         $exerciseAttempts
                     );
-                    $message .= $this->remedialCourseList();
+                    $message .= $this->remedialCourseList(api_get_user_id());
                     $isVisible = false;
                 } else {
                     // Check blocking exercise.
@@ -11239,11 +11239,12 @@ class Exercise
      *
      * @return string|null
      */
-    public function advanceCourseList(){
+    public function advanceCourseList($userId =0){
+        $userId = ((int)$userId == 0)?$userId:api_get_user_id();
         $extraMessage = null;
         /******************************************************************/
         $bestAttempt = Event::get_best_attempt_exercise_results_per_user(
-            api_get_user_id(),
+            $userId,
             $this->id,
             $this->course_id,
             $this->sessionId
@@ -11252,7 +11253,7 @@ class Exercise
             // In the case that the result is 0, get_best_attempt_exercise_results_per_user does not return data,
             // for that this block is used
             $exercise_stat_info = Event::getExerciseResultsByUser(
-                api_get_user_id(),
+                $userId,
                 $this->id,
                 $this->course_id,
                 $this->sessionId
@@ -11264,6 +11265,15 @@ class Exercise
                 }
             }
         }
+        if(
+            !isset( $bestAttempt['exe_result'])
+            || !isset( $bestAttempt['exe_id'])
+            || !isset( $bestAttempt['exe_weighting'])
+        ) {
+            // Sin intentos, sin id de ejercicio y sin total definido
+            return '';
+        }
+
         $resultado = $bestAttempt['exe_result'];
         $total = $bestAttempt['exe_weighting'];
         $objExercise = new Exercise();
@@ -11298,7 +11308,7 @@ class Exercise
                 //aqui se inscribe en el curso
                 $isInASession = !empty($this->sessionId);
                 $isSubscribed = CourseManager::is_user_subscribed_in_course(
-                    api_get_user_id(),
+                    $userId,
                     $courseData['code'],
                     $isInASession,
                     $this->sessionId
@@ -11306,7 +11316,7 @@ class Exercise
 
                 if (!$isSubscribed) {
                     CourseManager::subscribeUser(
-                        api_get_user_id(),
+                        $userId,
                         $courseData['code'],
                         STUDENT,
                         $this->sessionId
@@ -11330,10 +11340,11 @@ class Exercise
      *
      * @return string|null
      */
-    public function remedialCourseList(){
+    public function remedialCourseList($userId = 0, $review = false){
+        $userId = ((int)$userId == 0)?$userId:api_get_user_id();
         $extraMessage = null;
         $bestAttempt = Event::get_best_attempt_exercise_results_per_user(
-            api_get_user_id(),
+            $userId,
             $this->id,
             $this->course_id,
             $this->sessionId
@@ -11342,7 +11353,7 @@ class Exercise
             // In the case that the result is 0, get_best_attempt_exercise_results_per_user does not return data,
             // for that this block is used
             $exercise_stat_info = Event::getExerciseResultsByUser(
-                api_get_user_id(),
+                $userId,
                 $this->id,
                 $this->course_id,
                 $this->sessionId
@@ -11354,6 +11365,51 @@ class Exercise
                 }
             }
         }
+        $questionExcluded = [
+            5
+        ];
+        foreach ($bestAttempt['question_list'] as $questionId => $answer) {
+            $question = Question::read($questionId, api_get_course_info_by_id($bestAttempt['c_id']));
+            $type = $question->type;
+            if (in_array($type,$questionExcluded) && $review == false) {
+                return '';
+            }
+        }
+        //https://github.com/chamilo/chamilo-lms/blob/1.11.x/main/inc/lib/exercise.lib.php#L2103
+        // CMAR
+        // Si viene por revision y no tiene preguntas abiertas por corregir
+        // if($review == true) {
+            $whereCondition = '';
+
+
+            $whereCondition .= " te.exe_user_id  = '$userId'";
+
+/*
+            if (!empty($whereCondition)) {
+                $whereCondition = " AND $whereCondition";
+            }
+            */
+
+        /*
+            $count = ExerciseLib::get_count_exam_results(
+                $this->id,
+                $whereCondition
+            );
+          */
+        $count = ExerciseLib::get_exam_results_data(
+            null,
+            null,
+            null,
+            null,
+            $this->id,
+            $whereCondition,
+            false
+            // ,
+           // $courseCode,
+          //  $showSession
+        );
+            $a = $count ;
+        // }
         $resultado = $bestAttempt['exe_result'];
         $total = $bestAttempt['exe_weighting'];
         $objExercise = new Exercise();
@@ -11390,7 +11446,7 @@ class Exercise
                 //aqui se inscribe en el curso
                 $isInASession = !empty($this->sessionId);
                 $isSubscribed = CourseManager::is_user_subscribed_in_course(
-                    api_get_user_id(),
+                    $userId,
                     $courseData['code'],
                     $isInASession,
                     $this->sessionId
@@ -11398,7 +11454,7 @@ class Exercise
 
                 if (!$isSubscribed) {
                     CourseManager::subscribeUser(
-                        api_get_user_id(),
+                        $userId,
                         $courseData['code'],
                         STUDENT,
                         $this->sessionId
