@@ -337,6 +337,7 @@ $tool_name = get_lang('Statistics');
 $tools = [
     get_lang('Courses') => [
         'report=courses' => get_lang('CountCours'),
+        'report=courses_usage' => get_lang('UsageCours'),
         'report=tools' => get_lang('PlatformToolAccess'),
         'report=courselastvisit' => get_lang('LastAccess'),
         'report=coursebylanguage' => get_lang('CountCourseByLanguage'),
@@ -372,6 +373,155 @@ $course_categories = Statistics::getCourseCategories();
 $content = '';
 
 switch ($report) {
+    case 'courses_usage':
+        $today = new DateTime();
+
+        $reportPost = isset($_POST['report'])?$_POST['report']:null;
+        if(!empty($reportPost)){
+
+
+
+            $courseId = isset($_POST['course_id'])?$_POST['course_id']:0;
+            $sessionId = isset($_POST['session_id'])?$_POST['session_id']:0;
+            $userId = isset($_POST['user_id'])?$_POST['user_id']:0;
+            $startDate = isset($_POST['startDate'])?$_POST['startDate']:$today->modify('first day of this month')->format('Y-m-d');
+            $endDate = isset($_POST['endDate'])?$_POST['endDate']:$today->modify('last day of this month')->format('Y-m-d');
+
+        $first = true;
+        $lastDate = false;
+            $resultado = CourseManager::getAccessCourse(
+                $courseId,
+                $sessionId ,
+                $userId,
+                $startDate,
+                $endDate ,
+                $first ,
+                $lastDate
+            );
+
+
+            $a = [
+                '$courseId'=>$courseId,
+                '$sessionId'=>$sessionId ,
+                '$userId'=>$userId,
+                '$startDate'=>$startDate,
+                '$endDate'=>$endDate ,
+                '$first'=>$first ,
+                '$lastDate'=>$lastDate,
+                '$resultado'=>$resultado,
+            ];
+            echo json_encode($a);
+            exit();
+
+        }
+        $form = new FormValidator('courses_usage', 'get');
+
+        $startDate = isset($_GET['startDate']) ? $_GET['startDate'] : null;
+        $endDate = isset($_GET['endDate']) ? $_GET['endDate'] : null;
+        $form->addHidden('report', 'courses_usage');
+
+
+        if (empty($startDate)) {
+            $startDate = $today->modify('first day of this month')->format('Y-m-d');
+        }
+        if (empty($endDate)) {
+            $endDate = $today->modify('last day of this month')->format('Y-m-d');
+        }
+
+        $form->addDatePicker(
+            'startDate',
+            get_lang('DateStart'),
+            [
+                'value' => $startDate,
+            ]
+        );
+
+
+        $form->addDatePicker(
+            'endDate',
+            get_lang('DateEnd'),
+            [
+                'value' => $endDate,
+            ]
+        );
+        $courses = CourseManager::get_course_list();
+        $courseList = [
+            '' => get_lang('Select'),
+            0 => get_lang('SelectEverybody'),
+
+        ];
+        foreach ($courses as $course) {
+            $courseList[$course['id']] = $course['title'];
+        }
+        $form->addSelect(
+            'selected_course',
+            get_lang('CourseList'),
+            $courseList,
+            ['id' => 'selected_course']
+        );
+        $form->addSelect(
+            'selected_session',
+            get_lang('ListSession'),
+            $courseList,
+            ['id' => 'selected_session']
+        );
+        $form->addButtonSearch(get_lang('Search'));
+
+
+        //cmar
+        //echo var_export($_GET,true);
+// $e = CourseManager::get_course_list();
+        $e = $form;
+        $deb = '';
+        //$deb .="<pre>".var_export($courses,true)."</pre>";
+        $deb .= __FILE__."::".__LINE__." Aqui va https://github.com/chamilo/chamilo-lms/issues/2709";
+
+        $content = $form->returnForm().$deb;
+        $htmlHeadXtra[] = "<script>
+var tempo = undefined;
+
+function CargarDatos(url){
+    /*
+    $('#selected_session')
+    .find('option')
+    .remove()
+    .end();
+   */
+        $.ajax({
+            url: url,
+type: \"POST\",
+data: {
+                course_id:$('#selected_course').val(),
+                session_id:$('#selected_session').val(),
+                user_id:'0',
+                endDate:$('#endDate').val(),
+                startDate:$('#startDate').val(),
+                report:'courses_usage',
+
+                 },
+success: function(data){
+                console.error(data)
+}
+});
+    // ajax aqui con
+    //$('#selected_session').append('<option value=\"0\">text</option>')
+    //    .val('0')
+    //$( '.selectpicker' ).selectpicker( 'refresh' );;
+
+
+}
+$(document).ready(() => {
+$('#selected_course').on('change click',function(){
+    console.error($('#selected_course').val())
+});
+tempo = $('#selected_session');
+//  $( '.selectpicker' ).selectpicker( 'refresh' );;
+
+
+});
+
+</script>";
+        break;
     case 'session_by_date':
         $sessions = [];
         if ($validated) {

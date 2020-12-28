@@ -7210,4 +7210,76 @@ class CourseManager
         $courseFieldValue = new ExtraFieldValue('course');
         $courseFieldValue->saveFieldValues($params);
     }
+
+    public static function getAccessCourse(
+        $courseId = 0,
+        $sessionId = 0,
+        $userId = 0,
+        $startDate = null,
+        $endDate = null,
+        $first = true,
+        $lastDate = false
+    )
+    {
+        $where = '';
+        $whereAdded = '';
+        $limit = '';
+        $courseId = (int)$courseId;
+        $sessionId = (int)$sessionId;
+        $userId = (int)$userId;
+        $whereUser = null;
+        $whereCourse = null;
+        $whereStartDate = null;
+        $whereEndDate = null;
+        $andWhere = null;
+        $tabla = 'track_e_course_access as course_access';
+        if ($first == true) {
+            $limit = 'limit 1';
+        }
+
+        // Where Block Start
+        if ($courseId != 0) {
+            $whereAdded .= " course_access.c_id = $courseId ";
+            $andWhere = ' and ';
+        }
+        if ($userId != 0) {
+            $whereAdded .= "$andWhere course_access.user_id = $userId ";
+            $andWhere = ' and ';
+        }
+        if (!empty($startDate)) {
+            // Ajustar fechas UTC
+            $whereAdded .= " $andWhere course_access.login_course_date >= '$startDate' ";
+            $andWhere = ' and ';
+        }
+        if (!empty($endDate)) {
+            // Ajustar fechas UTC
+            $whereAdded .= " $andWhere course_access.login_course_date <= '$endDate' ";
+            $andWhere = ' and ';
+        }
+
+        if ($whereAdded != null) {
+            $whereAdded .= " $andWhere ";
+        }
+        $where = " where $whereAdded course_access.session_id = $sessionId ";
+
+        // Where Block End
+        $order = 'desc';
+        if ($lastDate == true) {
+            $order = 'asc';
+        }
+
+        $sql = "select
+course_access.course_access_id,
+course_access.c_id,
+course_access.user_id,
+course_access.login_course_date,
+course_access.logout_course_date,
+course_access.counter, -- Si bien recuerdo es la cantidad de veces que entró ahí el usuario antes de pasar a otro curso
+course_access.session_id,
+course_access.user_ip
+
+from $tabla $where order by course_access.login_course_date $order $limit;";
+
+        return $sql;
+    }
 }
