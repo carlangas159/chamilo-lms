@@ -7211,75 +7211,90 @@ class CourseManager
         $courseFieldValue->saveFieldValues($params);
     }
 
+
+    /**
+     * Returns access to courses based on course id, user, and a start and end date range.
+     * If withSession is 0, only the courses will be taken.
+     * If withSession is 1, only the sessions will be taken.
+     * If withSession is different from 0 and 1, the whole set will be take
+     *
+     * @param int $courseId
+     * @param int $withSession
+     * @param int $userId
+     * @param null $startDate
+     * @param null $endDate
+     *
+     */
     public static function getAccessCourse(
         $courseId = 0,
-        $sessionId = 0,
+        $withSession = 0,
         $userId = 0,
         $startDate = null,
-        $endDate = null,
-        $first = true,
-        $lastDate = false
+        $endDate = null
     )
     {
-        $where = '';
-        $whereAdded = '';
-        $limit = '';
+        $where = null;
         $courseId = (int)$courseId;
-        $sessionId = (int)$sessionId;
         $userId = (int)$userId;
-        $whereUser = null;
-        $whereCourse = null;
-        $whereStartDate = null;
-        $whereEndDate = null;
-        $andWhere = null;
         $tabla = 'track_e_course_access as course_access';
-        if ($first == true) {
-            $limit = 'limit 1';
-        }
 
-        // Where Block Start
+
+        $wheres = [];
         if ($courseId != 0) {
-            $whereAdded .= " course_access.c_id = $courseId ";
-            $andWhere = ' and ';
+            $wheres[] = " course_access.c_id = $courseId ";
         }
         if ($userId != 0) {
-            $whereAdded .= "$andWhere course_access.user_id = $userId ";
-            $andWhere = ' and ';
+            $wheres[] = " course_access.user_id = $userId ";
         }
         if (!empty($startDate)) {
-            // Ajustar fechas UTC
-            $whereAdded .= " $andWhere course_access.login_course_date >= '$startDate' ";
-            $andWhere = ' and ';
+            $startDate = api_get_utc_datetime($startDate,false,true);
+            $wheres[] = " course_access.login_course_date >= '".$startDate->format('Y-m-d')."' ";
         }
         if (!empty($endDate)) {
-            // Ajustar fechas UTC
-            $whereAdded .= " $andWhere course_access.login_course_date <= '$endDate' ";
-            $andWhere = ' and ';
+            $endDate = api_get_utc_datetime($endDate,false,true);
+            $wheres[] = " course_access.login_course_date <= '".$endDate->format('Y-m-d')."' ";
+        }
+        if($withSession == 0 ){
+            $wheres[] = " course_access.session_id = 0 ";
+        }elseif($withSession == 1 ) {
+            $wheres[] = " course_access.session_id != 0 ";
         }
 
-        if ($whereAdded != null) {
-            $whereAdded .= " $andWhere ";
+        $totalWhere = count($wheres);
+        for ($i = 0; $i <= $totalWhere; $i++) {
+            if (isset($wheres[$i])) {
+                if (empty($where)) {
+                    $where = ' WHERE ';
+                }
+                $where .= $wheres[$i];
+                if (isset($wheres[$i + 1])) {
+                    $where .= ' AND ';
+                }
+            }
         }
-        $where = " where $whereAdded course_access.session_id = $sessionId ";
 
-        // Where Block End
-        $order = 'desc';
-        if ($lastDate == true) {
-            $order = 'asc';
+        $sql = "SELECT DISTINCT
+	CAST( course_access.login_course_date AS DATE ) AS login_course_date,
+	user_id,
+	c_id
+FROM
+	$tabla
+	$where
+GROUP BY
+    c_id,
+	session_id,
+	CAST( course_access.login_course_date AS DATE ),
+	user_id
+ORDER BY
+	c_id
+";
+        $return = [];
+        $res = Database::query($sql);
+        if (Database::num_rows($res) > 0) {
+            while ($row = Database::fetch_array($res, 'ASSOC')) {
+                $return[] = $row;
+            }
         }
-
-        $sql = "select
-course_access.course_access_id,
-course_access.c_id,
-course_access.user_id,
-course_access.login_course_date,
-course_access.logout_course_date,
-course_access.counter, -- Si bien recuerdo es la cantidad de veces que entró ahí el usuario antes de pasar a otro curso
-course_access.session_id,
-course_access.user_ip
-
-from $tabla $where order by course_access.login_course_date $order $limit;";
-
-        return $sql;
+        return $return;
     }
 }

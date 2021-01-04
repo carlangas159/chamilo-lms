@@ -375,152 +375,120 @@ $content = '';
 switch ($report) {
     case 'courses_usage':
         $today = new DateTime();
+        $datos = [];
+        $reportPost = isset($_POST['report']) ? $_POST['report'] : null;
 
-        $reportPost = isset($_POST['report'])?$_POST['report']:null;
-        if(!empty($reportPost)){
+            $hoy = $today->format('Y-m-d');
+            $endDate = $hoy;
+            $fechas = [];
+            $fechas['day'] = $today->setTimestamp(strtotime('-1 day'))->format('Y-m-d');
+            $fechas['week'] = $today->setTimestamp(strtotime('-1 week'))->format('Y-m-d');
+            $fechas['month'] = $today->setTimestamp(strtotime('-1 month'))->format('Y-m-d');
+            $fechas['6month'] = $today->setTimestamp(strtotime('-6 month'))->format('Y-m-d');
+            $fechas['year'] = $today->setTimestamp(strtotime('-12 month'))->format('Y-m-d');
+            $fechas['2year'] = $today->setTimestamp(strtotime('-24 month'))->format('Y-m-d');
+            $fechas['total'] = null;
+            $reportes = [];
 
+            $courses = CourseManager::get_course_list();
+            foreach ($courses as $course) {
+                $courseId = $course['id'];
+                $sessions = 0;
+                $courseTotal = 0;
+                $visit = 0;
+                $datos[$course['id']] = [
+                    'tittle' => $course['title'],
+                    'courseId' => $courseId,
 
-
-            $courseId = isset($_POST['course_id'])?$_POST['course_id']:0;
-            $sessionId = isset($_POST['session_id'])?$_POST['session_id']:0;
-            $userId = isset($_POST['user_id'])?$_POST['user_id']:0;
-            $startDate = isset($_POST['startDate'])?$_POST['startDate']:$today->modify('first day of this month')->format('Y-m-d');
-            $endDate = isset($_POST['endDate'])?$_POST['endDate']:$today->modify('last day of this month')->format('Y-m-d');
-
-        $first = true;
-        $lastDate = false;
-            $resultado = CourseManager::getAccessCourse(
-                $courseId,
-                $sessionId ,
-                $userId,
-                $startDate,
-                $endDate ,
-                $first ,
-                $lastDate
-            );
-
-
-            $a = [
-                '$courseId'=>$courseId,
-                '$sessionId'=>$sessionId ,
-                '$userId'=>$userId,
-                '$startDate'=>$startDate,
-                '$endDate'=>$endDate ,
-                '$first'=>$first ,
-                '$lastDate'=>$lastDate,
-                '$resultado'=>$resultado,
-            ];
-            echo json_encode($a);
-            exit();
-
-        }
-        $form = new FormValidator('courses_usage', 'get');
-
-        $startDate = isset($_GET['startDate']) ? $_GET['startDate'] : null;
-        $endDate = isset($_GET['endDate']) ? $_GET['endDate'] : null;
-        $form->addHidden('report', 'courses_usage');
+                ];
 
 
-        if (empty($startDate)) {
-            $startDate = $today->modify('first day of this month')->format('Y-m-d');
-        }
-        if (empty($endDate)) {
-            $endDate = $today->modify('last day of this month')->format('Y-m-d');
-        }
+                foreach ($fechas as $index => $date) {
+                    $startDate = $date;
+                    $courseTotal = count(CourseManager::getAccessCourse(
+                        $courseId,
+                        0,
+                        0,
+                        $startDate,
+                        $endDate
+                    ));
+                    $sessions = count(CourseManager::getAccessCourse(
+                        $courseId,
+                        1,
+                        0,
+                        $startDate,
+                        $endDate
+                    ));
+                    $visit = count(CourseManager::getAccessCourse(
+                        $courseId,
+                        3,
+                        0,
+                        $startDate,
+                        $endDate
+                    ));
 
-        $form->addDatePicker(
-            'startDate',
-            get_lang('DateStart'),
-            [
-                'value' => $startDate,
-            ]
-        );
+                    $datos[$course['id']][$index] = [
+                        'start' => $startDate,
+                        'course' => $visit,
+                        // 'course' => $courseTotal,
+                        'session' => $sessions,
+                        'count' => $sessions + $courseTotal,
+                    ];
+                }
+                $datos[$course['id']]['bySessions'] = $sessions;
+                $datos[$course['id']]['byCourse'] = $courseTotal;
+                $datos[$course['id']]['byVisit'] = $visit;
+            }
 
 
-        $form->addDatePicker(
-            'endDate',
-            get_lang('DateEnd'),
-            [
-                'value' => $endDate,
-            ]
-        );
-        $courses = CourseManager::get_course_list();
-        $courseList = [
-            '' => get_lang('Select'),
-            0 => get_lang('SelectEverybody'),
+            // echo "<pre>".var_export($datos,true)."</pre>";
+            // echo json_encode($datos);
+            // exit();
 
+
+        $form = new FormValidator('courses_usage', 'post');
+
+
+        $tableCourse = new HTML_Table(['class' => 'table table-responsive']);
+        $headers = [
+            get_lang('Course'),
+            get_lang('Today'),
+            get_lang('ThisWeek'),
+            get_lang('ThisMonth'),
+            "6 ".get_lang('MinMonths'),
+            "1 ".get_lang('Year'),
+            "2 ".get_lang('Years'),
+            get_lang('NumAccess')." (".get_lang('Session').")",
+            get_lang('NumAccess')." (".get_lang('Course').")",
+            get_lang('AbsoluteTotal'). " (".get_lang('Visited').")"
         ];
-        foreach ($courses as $course) {
-            $courseList[$course['id']] = $course['title'];
+
+        $row = 0;
+        $column = 0;
+        foreach ($headers as $header) {
+            $tableCourse->setHeaderContents($row, $column, $header);
+            $column++;
         }
-        $form->addSelect(
-            'selected_course',
-            get_lang('CourseList'),
-            $courseList,
-            ['id' => 'selected_course']
-        );
-        $form->addSelect(
-            'selected_session',
-            get_lang('ListSession'),
-            $courseList,
-            ['id' => 'selected_session']
-        );
-        $form->addButtonSearch(get_lang('Search'));
+        $row++;
 
+        if (!empty($datos)) {
+            foreach ($datos as $index => $item) {
+                $tableCourse->setCellContents($row, 0, $item['tittle']);
+                $tableCourse->setCellContents($row, 1, $item['day']['count']);
+                $tableCourse->setCellContents($row, 2, $item['week']['count']);
+                $tableCourse->setCellContents($row, 3, $item['month']['count']);
+                $tableCourse->setCellContents($row, 4, $item['6month']['count']);
+                $tableCourse->setCellContents($row, 5, $item['year']['count']);
+                $tableCourse->setCellContents($row, 6, $item['2year']['count']);
+                $tableCourse->setCellContents($row, 7, $item['bySessions']);
+                $tableCourse->setCellContents($row, 8, $item['bySessions']);
+                $tableCourse->setCellContents($row, 9, $item['total']['count']);
+                $row++;
+            }
+        }
 
-        //cmar
-        //echo var_export($_GET,true);
-// $e = CourseManager::get_course_list();
-        $e = $form;
-        $deb = '';
-        //$deb .="<pre>".var_export($courses,true)."</pre>";
-        $deb .= __FILE__."::".__LINE__." Aqui va https://github.com/chamilo/chamilo-lms/issues/2709";
-
-        $content = $form->returnForm().$deb;
-        $htmlHeadXtra[] = "<script>
-var tempo = undefined;
-
-function CargarDatos(url){
-    /*
-    $('#selected_session')
-    .find('option')
-    .remove()
-    .end();
-   */
-        $.ajax({
-            url: url,
-type: \"POST\",
-data: {
-                course_id:$('#selected_course').val(),
-                session_id:$('#selected_session').val(),
-                user_id:'0',
-                endDate:$('#endDate').val(),
-                startDate:$('#startDate').val(),
-                report:'courses_usage',
-
-                 },
-success: function(data){
-                console.error(data)
-}
-});
-    // ajax aqui con
-    //$('#selected_session').append('<option value=\"0\">text</option>')
-    //    .val('0')
-    //$( '.selectpicker' ).selectpicker( 'refresh' );;
-
-
-}
-$(document).ready(() => {
-$('#selected_course').on('change click',function(){
-    console.error($('#selected_course').val())
-});
-tempo = $('#selected_session');
-//  $( '.selectpicker' ).selectpicker( 'refresh' );;
-
-
-});
-
-</script>";
+        $form->addHtml($tableCourse->toHtml());
+        $content = $form->returnForm();
         break;
     case 'session_by_date':
         $sessions = [];
