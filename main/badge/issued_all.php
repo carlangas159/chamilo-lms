@@ -75,6 +75,7 @@ foreach ($userSkills as $index => $skillIssue) {
     $skillIssueInfo = [
         'id' => $skillIssue->getId(),
         'datetime' => api_format_date($skillIssueDate, DATE_TIME_FORMAT_SHORT),
+        'year'=> api_format_date($skillIssueDate,'Y'),
         'acquired_level' => $currentSkillLevel,
         'argumentation_author_id' => $skillIssue->getArgumentationAuthorId(),
         'argumentation_author_name' => api_get_person_name(
@@ -274,6 +275,8 @@ foreach ($userSkills as $index => $skillIssue) {
     $allUserBadges[$index]['personal_badge'] = $personalBadge;
 }
 
+echo "<pre>".var_export($skillIssueInfo,true)."</pre>";
+exit();
 $template = new Template(get_lang('IssuedBadgeInformation'));
 $template->assign('user_badges', $allUserBadges);
 $template->assign('show_level', api_get_configuration_value('hide_skill_levels') == false);

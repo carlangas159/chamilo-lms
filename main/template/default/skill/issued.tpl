@@ -47,6 +47,7 @@
                 <a href="https://twitter.com/home?status={{ 'IHaveObtainedSkillXOnY' | get_lang |format(issue_info.skill_name, _s.site_name)}} - {{ _p.web }}badge/{{ issue_info.id }}" target="_new">
                     <em class='fa fa-twitter-square fa-3x text-light' aria-hidden='true'></em>
                 </a>
+                https://www.linkedin.com/profile/add?certId={{ issue_info.id }}&certUrl={{ _p.web }}badge/{{ issue_info.id }}&expirationMonth=5&expirationYear=2025&isFromA2p=true&issueMonth=2&issueYear=2020&name=Test%20Certificate&organizationId=51701219
             </div>
         {% endif %}
     </div>
