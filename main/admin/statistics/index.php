@@ -337,10 +337,10 @@ $tool_name = get_lang('Statistics');
 $tools = [
     get_lang('Courses') => [
         'report=courses' => get_lang('CountCours'),
-        'report=courses_usage' => get_lang('UsageCours'),
         'report=tools' => get_lang('PlatformToolAccess'),
         'report=courselastvisit' => get_lang('LastAccess'),
         'report=coursebylanguage' => get_lang('CountCourseByLanguage'),
+
     ],
     get_lang('Users') => [
         'report=users' => get_lang('CountUsers'),
@@ -358,6 +358,7 @@ $tools = [
     get_lang('System') => [
         'report=activities' => get_lang('ImportantActivities'),
         'report=user_session' => get_lang('PortalUserSessionStats'),
+        'report=courses_usage' => get_lang('CoursesUsage'),
     ],
     get_lang('Social') => [
         'report=messagereceived' => get_lang('MessagesReceived'),
@@ -374,98 +375,98 @@ $content = '';
 
 switch ($report) {
     case 'courses_usage':
+        $htmlHeadXtra[] = api_get_jqgrid_js();
         $today = new DateTime();
         $datos = [];
         $reportPost = isset($_POST['report']) ? $_POST['report'] : null;
 
-            $hoy = $today->format('Y-m-d');
-            $endDate = $hoy;
-            $fechas = [];
-            $fechas['day'] = $today->setTimestamp(strtotime('-1 day'))->format('Y-m-d');
-            $fechas['week'] = $today->setTimestamp(strtotime('-1 week'))->format('Y-m-d');
-            $fechas['month'] = $today->setTimestamp(strtotime('-1 month'))->format('Y-m-d');
-            $fechas['6month'] = $today->setTimestamp(strtotime('-6 month'))->format('Y-m-d');
-            $fechas['year'] = $today->setTimestamp(strtotime('-12 month'))->format('Y-m-d');
-            $fechas['2year'] = $today->setTimestamp(strtotime('-24 month'))->format('Y-m-d');
-            $fechas['total'] = null;
-            $reportes = [];
-
-            $courses = CourseManager::get_course_list();
-            foreach ($courses as $course) {
-                $courseId = $course['id'];
-                $sessions = 0;
-                $courseTotal = 0;
-                $visit = 0;
-                $datos[$course['id']] = [
-                    'tittle' => $course['title'],
-                    'courseId' => $courseId,
-
+        $hoy = $today->format('Y-m-d');
+        $endDate = $hoy;
+        $fechas = [];
+        $fechas['day'] = $today->setTimestamp(strtotime('-1 day'))->format('Y-m-d');
+        $fechas['week'] = $today->setTimestamp(strtotime('-1 week'))->format('Y-m-d');
+        // $fechas['week'] = $today->modify('monday this week')->format('Y-m-d');
+        $fechas['month'] = $today->setTimestamp(strtotime('-1 month'))->format('Y-m-d');
+        // $fechas['month'] = $today->modify('first day of this month')->format('Y-m-d');
+        $fechas['6month'] = $today->setTimestamp(strtotime('-6 month'))->format('Y-m-d');
+        $fechas['year'] = $today->setTimestamp(strtotime('-1 year'))->format('Y-m-d');
+        $fechas['2year'] = $today->setTimestamp(strtotime('-2 year'))->format('Y-m-d');
+        $fechas['total'] = null;
+        $reportes = [];
+        $courses = CourseManager::get_course_list();
+        foreach ($courses as $course) {
+            $courseId = $course['id'];
+            $sessions = 0;
+            $courseTotal = 0;
+            $visit = 0;
+            $datos[$course['id']] = [
+                'tittle' => $course['title'],
+                'courseId' => $courseId,
+            ];
+            foreach ($fechas as $index => $date) {
+                $startDate = $date;
+                $courseTotal = count(CourseManager::getAccessCourse(
+                    $courseId,
+                    0,
+                    0,
+                    $startDate,
+                    $endDate
+                ));
+                $sessions = count(CourseManager::getAccessCourse(
+                    $courseId,
+                    1,
+                    0,
+                    $startDate,
+                    $endDate
+                ));
+                $visit = count(CourseManager::getAccessCourse(
+                    $courseId,
+                    3,
+                    0,
+                    $startDate,
+                    $endDate
+                ));
+                $temp = [
+                    'start' => $startDate,
+                    'course' => $visit,
+                    'course_id' => $course['id'],
+                    'session' => $sessions,
+                    'count' => $sessions + $courseTotal,
                 ];
-
-
-                foreach ($fechas as $index => $date) {
-                    $startDate = $date;
-                    $courseTotal = count(CourseManager::getAccessCourse(
-                        $courseId,
-                        0,
-                        0,
-                        $startDate,
-                        $endDate
-                    ));
-                    $sessions = count(CourseManager::getAccessCourse(
-                        $courseId,
-                        1,
-                        0,
-                        $startDate,
-                        $endDate
-                    ));
-                    $visit = count(CourseManager::getAccessCourse(
-                        $courseId,
-                        3,
-                        0,
-                        $startDate,
-                        $endDate
-                    ));
-
-                    $datos[$course['id']][$index] = [
-                        'start' => $startDate,
-                        'course' => $visit,
-                        // 'course' => $courseTotal,
-                        'session' => $sessions,
-                        'count' => $sessions + $courseTotal,
-                    ];
-                }
-                $datos[$course['id']]['bySessions'] = $sessions;
-                $datos[$course['id']]['byCourse'] = $courseTotal;
-                $datos[$course['id']]['byVisit'] = $visit;
+                $datos[$course['id']][$index] = $temp;
             }
-
-
-            // echo "<pre>".var_export($datos,true)."</pre>";
-            // echo json_encode($datos);
-            // exit();
-
+            $datos[$course['id']]['bySessions'] = $sessions;
+            $datos[$course['id']]['byCourse'] = $courseTotal;
+            $datos[$course['id']]['byVisit'] = $visit;
+        }
 
         $form = new FormValidator('courses_usage', 'post');
-
-
-        $tableCourse = new HTML_Table(['class' => 'table table-responsive']);
+        /*
+        $form->addHtml('<div class="table col-md-12" id="table_base">'.
+            '<table id="table_data" class="table" style="min-height: 800px"></table>'.
+            '</div><div id="table_data_pager"></div> ');
+        */
+         $tableCourse = new HTML_Table(['class' => 'table table-responsive']);
         $headers = [
-            get_lang('Course'),
-            get_lang('Today'),
-            get_lang('ThisWeek'),
-            get_lang('ThisMonth'),
-            "6 ".get_lang('MinMonths'),
-            "1 ".get_lang('Year'),
-            "2 ".get_lang('Years'),
-            get_lang('NumAccess')." (".get_lang('Session').")",
-            get_lang('NumAccess')." (".get_lang('Course').")",
-            get_lang('AbsoluteTotal'). " (".get_lang('Visited').")"
-        ];
+            'title' => get_lang('Course'),
+            'day' => get_lang('Today'),
+            'week' => get_lang('ThisWeek'),
+            'month' => get_lang('ThisMonth'),
+            '6month' => "6 ".get_lang('MinMonths'),
+            'year' => "1 ".get_lang('Year'),
+            '2year' => "2 ".get_lang('Years'),
+            'byCourse' => get_lang('NumAccess')." (".get_lang('Course').")",
+            'bySessions' => get_lang('NumAccess')." (".get_lang('Session').")",
+            'total' => get_lang('AbsoluteTotal')." (".get_lang('Visited').")"
 
+        ];
+        $datosFechas = [];
         $row = 0;
+        $headerName = [];
         $column = 0;
-        foreach ($headers as $header) {
+        foreach ($headers as $index => $header) {
+            $headerName[] = $header;
+
             $tableCourse->setHeaderContents($row, $column, $header);
             $column++;
         }
@@ -480,15 +481,167 @@ switch ($report) {
                 $tableCourse->setCellContents($row, 4, $item['6month']['count']);
                 $tableCourse->setCellContents($row, 5, $item['year']['count']);
                 $tableCourse->setCellContents($row, 6, $item['2year']['count']);
-                $tableCourse->setCellContents($row, 7, $item['bySessions']);
+                $tableCourse->setCellContents($row, 7, $item['byCourse']);
                 $tableCourse->setCellContents($row, 8, $item['bySessions']);
                 $tableCourse->setCellContents($row, 9, $item['total']['count']);
                 $row++;
+                if(1 == ($row % 10)){
+                    $tableCourse->setCellContents($row, 0, "<strong>".$headerName[0]."</strong>");
+                    $tableCourse->setCellContents($row, 1, "<strong>".$headerName[1]."</strong>");
+                    $tableCourse->setCellContents($row, 2, "<strong>".$headerName[2]."</strong>");
+                    $tableCourse->setCellContents($row, 3, "<strong>".$headerName[3]."</strong>");
+                    $tableCourse->setCellContents($row, 4, "<strong>".$headerName[4]."</strong>");
+                    $tableCourse->setCellContents($row, 5, "<strong>".$headerName[5]."</strong>");
+                    $tableCourse->setCellContents($row, 6, "<strong>".$headerName[6]."</strong>");
+                    $tableCourse->setCellContents($row, 7, "<strong>".$headerName[7]."</strong>");
+                    $tableCourse->setCellContents($row, 8, "<strong>".$headerName[8]."</strong>");
+                    $tableCourse->setCellContents($row, 9, "<strong>".$headerName[9]."</strong>");
+                    $row++;
+                }
+                $datosFechas[] = [
+                    'title' => $item['tittle'],
+                    'day' => $item['day']['count'],
+                    'week' => $item['week']['count'],
+                    'month' => $item['month']['count'],
+                    '6month' => $item['6month']['count'],
+                    'year' => $item['year']['count'],
+                    '2year' => $item['2year']['count'],
+                    'byCourse' => $item['byCourse'],
+                    'bySessions' => $item['bySessions'],
+                    'total' => $item['total']['count'],
+                ];
             }
         }
 
         $form->addHtml($tableCourse->toHtml());
         $content = $form->returnForm();
+        $column_model = [
+            [
+                'name' => 'title',
+                'index' => 'title',
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                // 'width' => 'auto',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+            [
+                'name' => 'day',
+                'index' => 'day',
+
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                 // 'width' => '50',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+            [
+                'name' => 'week',
+                'index' => 'week',
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                 // 'width' => '50',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+            [
+                'name' => 'month',
+                'index' => 'month',
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                 // 'width' => '50',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+            [
+                'name' => '6month',
+                'index' => '6month',
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                 // 'width' => '50',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+            [
+                'name' => 'year',
+                'index' => 'year',
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                 // 'width' => '50',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+            [
+                'name' => '2year',
+                'index' => '2year',
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                 // 'width' => '50',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+            [
+                'name' => 'byCourse',
+                'index' => 'byCourse',
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                 // 'width' => '50',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+            [
+                'name' => 'bySessions',
+                'index' => 'bySessions',
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                 // 'width' => '50',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+            [
+                'name' => 'total',
+                'index' => 'total',
+                'fixed' => 'true',
+                'resizable' => 'true',
+                'search' => 'true',
+                 // 'width' => '50',
+                'align' => 'left',
+                'sortable' => 'true',
+            ],
+        ];
+/*
+        $htmlHeadXtra[] = '<script>
+
+$(function() {
+    // grid definition see the $obj->display() function
+      '.Display::grid_js(
+                "table_data",
+                $url,
+                $headerName, //
+                $column_model,
+                [],
+                $datosFechas,
+                '',
+                false
+
+            ).'
+      $("#gview_table_data > .ui-jqgrid-bdiv").css("min-height", "500px");
+      $("#gbox_table_data").css("width", $("#table_base").width());
+      $("#gview_table_data").css("width", $("#table_base").width());
+      $("#gview_table_data > .ui-jqgrid-bdiv").css("width", $("#table_base").width());
+});
+</script>';
+        */
+
         break;
     case 'session_by_date':
         $sessions = [];

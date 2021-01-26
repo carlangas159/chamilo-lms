@@ -7288,13 +7288,9 @@ GROUP BY
 ORDER BY
 	c_id
 ";
-        $return = [];
         $res = Database::query($sql);
-        if (Database::num_rows($res) > 0) {
-            while ($row = Database::fetch_array($res, 'ASSOC')) {
-                $return[] = $row;
-            }
-        }
-        return $return;
+        $data = Database::store_result($res);
+        Database::free_result($res);
+        return $data;
     }
 }
