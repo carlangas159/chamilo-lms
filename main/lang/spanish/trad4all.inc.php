@@ -6679,7 +6679,7 @@ $NewExercises = "Nuevo ejercicio";
 $MyAverage = "Mi promedio";
 $AllAttempts = "Todos los intentos";
 $QuestionsToReview = "Preguntas que desea comprobar";
-$QuestionWithNoAnswer = "Preguntas sin responder";
+$QuestionWithNoAnswer = "Preguntas sin respuesta resaltadas en rojo a continuación";
 $ValidateAnswers = "Validar respuestas";
 $ReviewQuestions = "Revisar las preguntas seleccionadas";
 $YouTriedToResolveThisExerciseEarlier = "Ya intentó resolver este ejercicio anteriormente";
@@ -8747,4 +8747,8 @@ $BackToAttemptList = "Regresar a la lista de intentos";
 $ShowScoreEveryAttemptShowAnswersLastAttemptNoFeedback = "Mostrar el resultado al alumno: mostrar la puntuación, la elección del alumno y sus comentarios en cada intento, agrega la respuesta correcta y sus comentarios cuando se alcance el límite de intentos elegido.";
 $AddGradebookComment = "Comentario";
 $LatestLoginInAnyCourse = "Último acceso en un curso";
+$The = "El";
+$MultiplicateQuestionsByClass = "Multiplicar las preguntas por clase";
+$MultiplicateQuestionsByUser = "Multiplicar las preguntas por usuario";
+$QuestionForNextUser = "Preguntas sobre el usuario siguiente";
 ?>

@@ -6675,7 +6675,7 @@ $NewExercises = "New exercises";
 $MyAverage = "My average";
 $AllAttempts = "All attempts";
 $QuestionsToReview = "Questions to be reviewed";
-$QuestionWithNoAnswer = "Questions without answer";
+$QuestionWithNoAnswer = "Questions without answer will be highlighted in Red below";
 $ValidateAnswers = "Validate answers";
 $ReviewQuestions = "Review selected questions";
 $YouTriedToResolveThisExerciseEarlier = "You have tried to resolve this exercise earlier";
@@ -8719,4 +8719,8 @@ $BackToAttemptList = "Back to the attempt list";
 $ShowScoreEveryAttemptShowAnswersLastAttemptNoFeedback = "Show the result to the learner: Show the score, the learner's choice and his feedback on each attempt, add the correct answer and his feedback when the chosen limit of attempts is reached.";
 $AddGradebookComment = "Comment";
 $LatestLoginInAnyCourse = "Latest login in a course";
+$The = "The";
+$MultiplicateQuestionsByClass = "Multiplicate questions by class";
+$MultiplicateQuestionsByUser = "Multiplicate questions by user";
+$QuestionForNextUser = "Questions about next user";
 ?>
