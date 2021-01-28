@@ -7267,9 +7267,7 @@ class CourseManager
         $where = null;
         $courseId = (int)$courseId;
         $userId = (int)$userId;
-        $tabla = 'track_e_course_access as course_access';
-
-
+        $tblTrackECourse = Database::get_main_table(TABLE_STATISTIC_TRACK_E_COURSE_ACCESS);
         $wheres = [];
         if ($courseId != 0) {
             $wheres[] = " course_access.c_id = $courseId ";
@@ -7304,21 +7302,22 @@ class CourseManager
             }
         }
 
-        $sql = "SELECT DISTINCT
-	CAST( course_access.login_course_date AS DATE ) AS login_course_date,
-	user_id,
-	c_id
-FROM
-	$tabla
-	$where
-GROUP BY
-    c_id,
-	session_id,
-	CAST( course_access.login_course_date AS DATE ),
-	user_id
-ORDER BY
-	c_id
-";
+        $sql = "
+        SELECT DISTINCT
+            CAST( course_access.login_course_date AS DATE ) AS login_course_date,
+            user_id,
+            c_id
+        FROM
+            $tblTrackECourse as course_access
+            $where
+        GROUP BY
+            c_id,
+            session_id,
+            CAST( course_access.login_course_date AS DATE ),
+            user_id
+        ORDER BY
+            c_id
+        ";
         $res = Database::query($sql);
         $data = Database::store_result($res);
         Database::free_result($res);
